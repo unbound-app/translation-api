@@ -1,6 +1,7 @@
 services:
   libretranslate:
     image: libretranslate/libretranslate:latest
+    container_name: translation-libretranslate
     restart: unless-stopped
     environment:
       LT_DISABLE_WEB_UI: "true"
@@ -11,6 +12,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: translation-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -20,6 +22,7 @@ services:
 
   auth-proxy:
     build: .
+    container_name: translation-auth-proxy
     restart: unless-stopped
     depends_on:
       - libretranslate
