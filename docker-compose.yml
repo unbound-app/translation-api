@@ -1,0 +1,48 @@
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
+    environment:
+      LT_DISABLE_WEB_UI: "true"
+    volumes:
+      - libretranslate-models:/home/libretranslate/.local/share/argos-translate
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - internal
+
+  auth-proxy:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - libretranslate
+      - redis
+    environment:
+      NODE_ENV: production
+      PORT: "47281"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+      SESSION_JWT_SECRET: ${SESSION_JWT_SECRET}
+      REDIS_URL: redis://redis:6379
+      LIBRETRANSLATE_URL: http://libretranslate:5000
+    ports:
+      - "127.0.0.1:47281:47281"
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  libretranslate-models:
+  redis-data:
