@@ -1,4 +1,5 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { parse as parseEnvFile } from "dotenv";
 import { z } from "zod";
 import { fetchOnePasswordSecrets } from "@/utils/onePasswordSecrets.ts";
 
@@ -38,18 +39,34 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-function hasRegularEnvFile(): boolean {
+function hasEnvFile(): boolean {
   try {
-    return statSync(".env").isFile();
+    const stats = statSync(".env");
+    // 1Password's local environments feature serves .env content through a
+    // named pipe rather than a regular file, so FIFOs count too. Bun's
+    // built-in .env auto-loading doesn't read FIFOs, so we load it ourselves.
+    return stats.isFile() || stats.isFIFO();
   } catch {
     return false;
   }
 }
 
-const usesOnePassword = existsSync("/.dockerenv") || (!hasRegularEnvFile() && !process.env.DISCORD_CLIENT_ID);
+function loadDotEnvFile(): Record<string, string> {
+  try {
+    return parseEnvFile(readFileSync(".env", "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+const usesOnePassword = existsSync("/.dockerenv") || (!hasEnvFile() && !process.env.DISCORD_CLIENT_ID);
 
 async function loadEnv(): Promise<Env> {
   let source: NodeJS.ProcessEnv = process.env;
+
+  if (!usesOnePassword && hasEnvFile()) {
+    source = { ...loadDotEnvFile(), ...process.env };
+  }
 
   if (usesOnePassword) {
     try {
