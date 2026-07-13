@@ -1,12 +1,12 @@
+import { existsSync, statSync } from "node:fs";
 import { z } from "zod";
+import { fetchOnePasswordSecrets } from "@/utils/onePasswordSecrets.ts";
 
 const snowflake = z.string().regex(/^\d{17,20}$/, "expected a Discord snowflake ID");
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("production"),
-  // Deliberately not 8080/3000/etc: this port is bound on the host so the
-  // VPS's (non-dockerized) Caddy instance has an uncontested port to
-  // reverse_proxy to.
+
   PORT: z.coerce.number().int().positive().default(47281),
 
   PUBLIC_BASE_URL: z.string().url(),
@@ -38,8 +38,39 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-function loadEnv(): Env {
-  const parsed = envSchema.safeParse(process.env);
+function hasRegularEnvFile(): boolean {
+  try {
+    return statSync(".env").isFile();
+  } catch {
+    return false;
+  }
+}
+
+const usesOnePassword = existsSync("/.dockerenv") || (!hasRegularEnvFile() && !process.env.DISCORD_CLIENT_ID);
+
+async function loadEnv(): Promise<Env> {
+  let source: NodeJS.ProcessEnv = process.env;
+
+  if (usesOnePassword) {
+    try {
+      const secrets = await fetchOnePasswordSecrets();
+      source = {
+        ...process.env,
+        PUBLIC_BASE_URL: secrets.publicBaseUrl,
+        DISCORD_CLIENT_ID: secrets.discordClientId,
+        DISCORD_CLIENT_SECRET: secrets.discordClientSecret,
+        DISCORD_GUILD_ID: secrets.discordGuildId,
+        DISCORD_REDIRECT_URI: secrets.discordRedirectUri,
+        SESSION_JWT_SECRET: secrets.sessionJwtSecret,
+      };
+    } catch (error) {
+      console.error("Failed to load secrets from 1Password:");
+      console.error(error);
+      process.exit(1);
+    }
+  }
+
+  const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
     console.error("Invalid environment configuration:");
     for (const issue of parsed.error.issues) {
@@ -50,6 +81,6 @@ function loadEnv(): Env {
   return parsed.data;
 }
 
-export const env = loadEnv();
+export const env = await loadEnv();
 
 export const DISCORD_EPOCH_MS = 1_420_070_400_000n;

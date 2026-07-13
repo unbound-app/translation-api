@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
+    "@1password/connect": "^1.4.2",
     "hono": "^4.6.14",
     "ioredis": "^5.4.2",
     "jose": "^5.9.6",

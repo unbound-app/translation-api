@@ -30,12 +30,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: "47281"
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
-      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
-      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
-      SESSION_JWT_SECRET: ${SESSION_JWT_SECRET}
+      OP_CONNECT_TOKEN: ${OP_UNBOUND_TOKEN}
+      OP_CONNECT_SERVER_URL: https://1p.unbound.rip
       REDIS_URL: redis://redis:6379
       LIBRETRANSLATE_URL: http://libretranslate:5000
     ports:
