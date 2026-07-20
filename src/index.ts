@@ -11,6 +11,7 @@ import { requestLogger } from "@/utils/requestLog.ts";
 const app = new Hono();
 
 app.use("*", requestLogger);
+app.use("*", requireDiscordClient);
 
 function clientIp(c: { req: { header: (name: string) => string | undefined } }): string {
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -57,7 +58,7 @@ app.get("/auth/callback", async (c) => {
   }
 });
 
-app.post("/auth/refresh", requireDiscordClient, async (c) => {
+app.post("/auth/refresh", async (c) => {
   const limited = await rateLimit(`auth-ip:${clientIp(c)}`, env.RATE_LIMIT_AUTH_MAX, env.RATE_LIMIT_AUTH_WINDOW_SECONDS);
   if (!limited.allowed) return c.text("rate limit exceeded", 429);
 
@@ -72,7 +73,7 @@ app.post("/auth/refresh", requireDiscordClient, async (c) => {
   return c.json({ accessToken: sessionToken, refreshToken: newRefreshToken, expiresIn: env.ACCESS_TOKEN_TTL_SECONDS });
 });
 
-app.post("/translate", requireDiscordClient, async (c) => {
+app.post("/translate", async (c) => {
   const authHeader = c.req.header("authorization");
   const sessionToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
   if (!sessionToken) return c.text("missing session token", 401);
