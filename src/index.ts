@@ -4,6 +4,7 @@ import { consumeRefreshToken, issueRefreshToken, issueSession, verifySession } f
 import { consumeOAuthState, createOAuthState } from "@/auth/state.ts";
 import { env } from "@/config.ts";
 import { buildAuthorizeUrl, DiscordOAuthError, exchangeCodeForToken, fetchDiscordUser, revokeDiscordToken } from "@/discord/oauth.ts";
+import { requireDiscordClient } from "@/security/discordClientGate.ts";
 import { rateLimit } from "@/security/rateLimit.ts";
 import { requestLogger } from "@/utils/requestLog.ts";
 
@@ -56,7 +57,7 @@ app.get("/auth/callback", async (c) => {
   }
 });
 
-app.post("/auth/refresh", async (c) => {
+app.post("/auth/refresh", requireDiscordClient, async (c) => {
   const limited = await rateLimit(`auth-ip:${clientIp(c)}`, env.RATE_LIMIT_AUTH_MAX, env.RATE_LIMIT_AUTH_WINDOW_SECONDS);
   if (!limited.allowed) return c.text("rate limit exceeded", 429);
 
@@ -71,7 +72,7 @@ app.post("/auth/refresh", async (c) => {
   return c.json({ accessToken: sessionToken, refreshToken: newRefreshToken, expiresIn: env.ACCESS_TOKEN_TTL_SECONDS });
 });
 
-app.post("/translate", async (c) => {
+app.post("/translate", requireDiscordClient, async (c) => {
   const authHeader = c.req.header("authorization");
   const sessionToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
   if (!sessionToken) return c.text("missing session token", 401);
