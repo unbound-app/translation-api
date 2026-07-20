@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { Hono } from "hono";
 
+process.env.PUBLIC_BASE_URL ??= "https://translate.example.com";
+process.env.DISCORD_CLIENT_ID ??= "1524261174240350318";
+process.env.DISCORD_CLIENT_SECRET ??= "test-client-secret";
+process.env.DISCORD_GUILD_ID ??= "950850315601711176";
+process.env.DISCORD_REDIRECT_URI ??= "https://translate.example.com/auth/callback";
+process.env.SESSION_JWT_SECRET ??= "test-session-jwt-secret-at-least-32-chars-long";
 process.env.REDIS_URL ??= "redis://localhost:6379";
 process.env.LIBRETRANSLATE_URL ??= "http://localhost:5000";
 
