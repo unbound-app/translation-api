@@ -5,8 +5,11 @@ import { consumeOAuthState, createOAuthState } from "@/auth/state.ts";
 import { env } from "@/config.ts";
 import { buildAuthorizeUrl, DiscordOAuthError, exchangeCodeForToken, fetchDiscordUser, revokeDiscordToken } from "@/discord/oauth.ts";
 import { rateLimit } from "@/security/rateLimit.ts";
+import { requestLogger } from "@/utils/requestLog.ts";
 
 const app = new Hono();
+
+app.use("*", requestLogger);
 
 function clientIp(c: { req: { header: (name: string) => string | undefined } }): string {
   return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
