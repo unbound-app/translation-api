@@ -1,7 +1,7 @@
 import type { Context, Next } from "hono";
 import { env } from "@/config.ts";
 
-const IOS_USER_AGENT = /^Discord\/\d+ CFNetwork\/[\d.]+ Darwin\/[\d.]+$/;
+const IOS_USER_AGENT = /^(?:Discord|Unbound)\/\d+ CFNetwork\/[\d.]+ Darwin\/[\d.]+$/;
 const ANDROID_USER_AGENT = /^Discord-Android\/\d+\b/;
 
 const SENTRY_RELEASE = /(?:^|,)sentry-release=discord_(ios|android)%40/;

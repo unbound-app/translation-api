@@ -34,6 +34,17 @@ describe("requireDiscordClient", () => {
     expect(res.status).toBe(200);
   });
 
+  test("allows a request from Unbound running inside Discord on iOS", async () => {
+    const app = buildApp();
+    const res = await app.request("/probe", {
+      headers: {
+        ...REAL_IOS_HEADERS,
+        "user-agent": "Unbound/107064 CFNetwork/3892.100.1 Darwin/27.0.0",
+      },
+    });
+    expect(res.status).toBe(200);
+  });
+
   test("rejects a request with no headers as 418", async () => {
     const app = buildApp();
     const res = await app.request("/probe");
