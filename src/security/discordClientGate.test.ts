@@ -45,6 +45,25 @@ describe("requireDiscordClient", () => {
     expect(res.status).toBe(200);
   });
 
+  test("allows Discord on iOS without Sentry headers, which Unbound blocks", async () => {
+    const app = buildApp();
+    const res = await app.request("/probe", {
+      headers: {
+        "user-agent": "Discord/115636 CFNetwork/3860.100.1 Darwin/25.0.0",
+        host: REAL_IOS_HEADERS.host,
+      },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  test("allows a request from Discord on Android", async () => {
+    const app = buildApp();
+    const res = await app.request("/probe", {
+      headers: { "user-agent": "Discord-Android/350008;RNA", host: REAL_IOS_HEADERS.host },
+    });
+    expect(res.status).toBe(200);
+  });
+
   test("rejects a request with no headers as 418", async () => {
     const app = buildApp();
     const res = await app.request("/probe");
@@ -55,14 +74,6 @@ describe("requireDiscordClient", () => {
     const app = buildApp();
     const res = await app.request("/probe", {
       headers: { ...REAL_IOS_HEADERS, "user-agent": "curl/8.4.0" },
-    });
-    expect(res.status).toBe(418);
-  });
-
-  test("rejects a spoofed user-agent missing the sentry baggage", async () => {
-    const app = buildApp();
-    const res = await app.request("/probe", {
-      headers: { "user-agent": REAL_IOS_HEADERS["user-agent"], host: REAL_IOS_HEADERS.host },
     });
     expect(res.status).toBe(418);
   });
